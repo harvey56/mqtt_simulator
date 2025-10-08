@@ -10,13 +10,13 @@ It allows :
 
 Using the application starts with :
 
-1 - Creating a new project, using the "+" icon, in the left hand side menu
-2 - Adding a new configuration to a project
-    2.1 - Enter a name for the configuration
-    2.2 - Select which project to add the configuration to, from the dropdown menu
-    2.3 - Enter a name for the MQTT topic to publish to
-    2.4 - Enter a value for the publication frequency of MQTT messages
-    2.5 - Add a JSON file. That JSON includes the content of the MQTT message that will be published
+1. Creating a new project, using the "+" icon, in the left hand side menu
+2. Adding a new configuration to a project
+    1. Enter a name for the configuration
+    2. Select which project to add the configuration to, from the dropdown menu
+    3. Enter a name for the MQTT topic to publish to
+    4. Enter a value for the publication frequency of MQTT messages
+    5. Add a JSON file. That JSON includes the content of the MQTT message that will be published
 
 To start publishing the MQTT message, hit the play icon, next to the project name
 
