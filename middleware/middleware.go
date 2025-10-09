@@ -19,6 +19,7 @@ func AppRouterInjector(ar *AppRouter) func(http.Handler) http.Handler {
 }
 
 type AppRouter struct {
-	Router *mux.Router
-	DB     *sql.DB
+	Router      *mux.Router
+	DB          *sql.DB
+	RestartChan chan struct{}
 }

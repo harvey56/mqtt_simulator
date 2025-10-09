@@ -1,0 +1,20 @@
+{
+  "general": {
+    "broker_address": "0.0.0.0",
+    "broker_port": 1883,
+    "username": "",
+    "password": ""
+  },
+  "server_db": {
+    "server_address": "localhost",
+    "server_port": 5432,
+    "database_name": "mqtt_server",
+    "username": "postgres",
+    "password": ""
+  },
+  "mqtt_broker": {
+    "address": "127.0.0.1",
+    "port": { "http": "1885", "https": "1884" },
+    "protocol": { "http": "ws", "https": "wss" }
+  }
+}

@@ -29,22 +29,28 @@ func PostMessage(w http.ResponseWriter, r *http.Request) {
 		// http.Error(w, "Database connection not available", http.StatusInternalServerError)
 		// return
 		Respond_With_JSON(w, http.StatusInternalServerError, "Database connection not available")
+		return
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		Respond_With_JSON(w, http.StatusBadRequest, fmt.Sprintf("Invalid request payload: %v", err))
+		return
 	}
 	defer r.Body.Close()
 
 	payloadBytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		Respond_With_JSON(w, http.StatusInternalServerError, "Failed to marshal payload")
+		return
 	}
 
 	_, err = ar.DB.Exec("INSERT INTO messages (topic, payload, frequency) VALUES ($1, $2, $3)", msg.Topic, payloadBytes, msg.Frequency)
 	if err != nil {
 		Respond_With_JSON(w, http.StatusInternalServerError, fmt.Sprintf("Failed to insert message into database: %v", err))
 	}
+
+	// Notify the publisher manager to restart
+	ar.RestartChan <- struct{}{}
 
 	Respond_With_JSON(w, http.StatusOK, "Message added successfully")
 }

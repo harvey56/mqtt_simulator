@@ -13,9 +13,10 @@ import (
 )
 
 type AppRouter struct {
-	Router *mux.Router
-	DB     *sql.DB
-	WSHub  *ws.Hub
+	Router      *mux.Router
+	DB          *sql.DB
+	WSHub       *ws.Hub
+	RestartChan chan struct{}
 }
 
 func NewRouter() *AppRouter {
@@ -38,11 +39,13 @@ func (ar *AppRouter) Initialize() {
 
 func (ar *AppRouter) SetDB(db *sql.DB) {
 	ar.DB = db
+	ar.RestartChan = make(chan struct{}, 1)
 	log.Println("Set the DB connection in the router")
 
 	middlewareAppRouter := &middleware.AppRouter{
-		Router: ar.Router,
-		DB:     ar.DB,
+		Router:      ar.Router,
+		DB:          ar.DB,
+		RestartChan: ar.RestartChan,
 	}
 	ar.Router.Use(middleware.AppRouterInjector(middlewareAppRouter))
 }
