@@ -124,19 +124,63 @@ const JsonDashboard: React.FC<JsonDashboardProps> = () => {
     return nodes;
   };
 
+  const treeToJson = (nodes: JsonNode[]): any => {
+    const obj: any = {};
+    nodes.forEach((node) => {
+      if (node.children) {
+        if (node.type === "array") {
+          obj[node.key] = node.children.map((child) => {
+            if (child.children) {
+              return treeToJson(child.children);
+            }
+            return child.value;
+          });
+        } else {
+          obj[node.key] = treeToJson(node.children);
+        }
+      } else {
+        obj[node.key] = node.value;
+      }
+    });
+    return obj;
+  };
+
   const handleFileSelect = (file: File) => {
     if (file.type === "application/json" || file.name.endsWith(".json")) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const jsonContent = JSON.parse(e.target?.result as string);
-          const treeData = parseJsonToTree(jsonContent);
-          setCurrentConfig((prev) => ({
-            ...prev,
-            jsonData: treeData,
-            fileName: file.name,
-            name: file.name.replace(".json", ""),
-          }));
+          const fileContent = JSON.parse(e.target?.result as string);
+
+          // Check if the file has the expected structure
+          if (
+            "topic" in fileContent &&
+            "frequency" in fileContent &&
+            "payload" in fileContent
+          ) {
+            const treeData = parseJsonToTree(fileContent.payload);
+            setCurrentConfig((prev) => ({
+              ...prev,
+              jsonData: treeData,
+              fileName: file.name,
+              name: file.name.replace(".json", ""),
+              topic: { ...prev.topic, value: fileContent.topic },
+              frequency: {
+                ...prev.frequency,
+                value: String(fileContent.frequency),
+              },
+            }));
+          } else {
+            const treeData = parseJsonToTree(fileContent);
+            setCurrentConfig((prev) => ({
+              ...prev,
+              jsonData: treeData,
+              fileName: file.name,
+              name: file.name.replace(".json", ""),
+              topic: { ...prev.topic, value: "" },
+              frequency: { ...prev.frequency, value: "" },
+            }));
+          }
         } catch (error) {
           alert("Invalid JSON file. Please select a valid JSON file.");
         }
@@ -229,12 +273,8 @@ const JsonDashboard: React.FC<JsonDashboardProps> = () => {
 
     setRunningProjects((prev) => new Set([...prev, projectId]));
 
-    // Simulate API request start
     console.log(`Starting API requests for project: ${project.name}`);
     console.log("Configurations:", project.configurations);
-
-    // Here you would implement actual API request logic
-    alert(`Started API requests for project: ${project.name}`);
   };
 
   const stopProject = (projectId: string) => {
@@ -247,11 +287,7 @@ const JsonDashboard: React.FC<JsonDashboardProps> = () => {
       return newSet;
     });
 
-    // Simulate API request stop
     console.log(`Stopping API requests for project: ${project.name}`);
-
-    // Here you would implement actual API request stop logic
-    alert(`Stopped API requests for project: ${project.name}`);
   };
 
   const toggleExpanded = (path: string) => {
@@ -362,9 +398,42 @@ const JsonDashboard: React.FC<JsonDashboardProps> = () => {
     }));
   };
 
-  const saveConfiguration = () => {
+  const saveConfiguration = async () => {
     if (!currentConfig.name.trim()) {
       alert("Please provide a configuration name");
+      return;
+    }
+    if (currentConfig.jsonData.length === 0) {
+      alert("Please upload a JSON file before saving.");
+      return;
+    }
+
+    const payload = {
+      topic: currentConfig.topic.value,
+      frequency: parseInt(currentConfig.frequency.value, 10) || 0,
+      payload: treeToJson(currentConfig.jsonData),
+    };
+
+    try {
+      const response = await fetch("http://localhost:8100/api/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Failed to save configuration to the backend"
+        );
+      }
+
+      const responseData = await response.json();
+      console.log("Backend response:", responseData);
+    } catch (error) {
+      console.error("Error saving configuration:", error);
       return;
     }
 
